@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Centinela · Radar de asteroides</title>
+<meta name="description" content="Proyecto final de Seminario de Ciencia de los Datos: un modelo que encuentra asteroides potencialmente peligrosos con tres datos de su órbita, en vivo.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23060C16'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%235AAAE8' stroke-width='3'/%3E%3Cellipse cx='38' cy='30' rx='24' ry='12' fill='none' stroke='%23FF5C40' stroke-width='3' transform='rotate(-25 38 30)'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23F5B83C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/estilo.css">
+<script>document.documentElement.classList.add("js");try{const t=localStorage.getItem("centinela-tema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+
+<header class="barra">
+  <span class="marca">Centinela</span>
+  <nav class="fases" id="fases" aria-label="Escenas"></nav>
+  <span class="fase-txt" id="faseTxt"></span>
+  <span class="quien" id="quien"></span>
+  <span class="ayuda" aria-label="Atajos de teclado"><button id="bNotas" title="Mostrar u ocultar el guion"><kbd>N</kbd> guion</button><button id="bTema" title="Cambiar tema"><kbd>T</kbd></button><button id="bFull" title="Pantalla completa"><kbd>F</kbd></button></span>
+</header>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="anillo"></span><div><span class="label" id="toastLabel">Alerta</span><b id="toastText"></b></div></div>
+
+<main>
+
+<!-- 1 · PORTADA -->
+<section class="escena" id="portada" data-quien="Julián" data-fase="Inicio">
+  <canvas id="cielo" aria-hidden="true"></canvas>
+  <div class="dentro">
+    <p class="label aparece">Seminario de la Ciencia de los Datos · Ingeniería de Software · Pascual Bravo</p>
+    <h1 class="portada-t aparece">Centinela</h1>
+    <p class="portada-s aparece">Un radar que encuentra asteroides potencialmente peligrosos con solo tres datos de su órbita.</p>
+    <div class="equipo aparece">
+      <div style="--c:var(--julian)"><b>Julián Zapata Arango</b><span>Problema y conclusiones</span></div>
+      <div style="--c:var(--juanjo)"><b>Juan José Orrego Arias</b><span>Datos y exploración</span></div>
+      <div style="--c:var(--emma)"><b>Emmanuel Baena</b><span>Modelo y resultados</span></div>
+      <div style="--c:var(--santi)"><b>Santiago Cano</b><span>Radar en vivo e interpretación</span></div>
+    </div>
+    <p class="creditos aparece">Docente: Ricardo José Ruiz Gaviria · Proyecto final, Parcial 3</p>
+  </div>
+  <p class="pista">Use → o la barra espaciadora para avanzar · N muestra el guion</p>
+</section>
+
+<!-- 2 · PROBLEMA -->
+<section class="escena" id="problema" data-quien="Julián" data-fase="1 · Problema">
+  <div class="dentro dos">
+    <div>
+      <div class="cabeza"><span class="fase" style="--c:var(--julian)">1 · El problema</span></div>
+      <h2 class="titulo aparece">Demasiados asteroides <span class="suave">para mirarlos todos</span></h2>
+      <p class="cifra aparece" style="font-size:clamp(56px,8vw,104px)"><span id="contador">1.281.510</span></p>
+      <p class="lead aparece" style="margin-top:8px">asteroides en el catálogo de la NASA. Ningún observatorio puede seguirlos a todos de cerca, y <b>solo 1 de cada 546</b> es potencialmente peligroso.</p>
+    </div>
+    <div class="aparece">
+      <p class="label" style="margin-bottom:12px">546 asteroides · ¿cuál es el peligroso?</p>
+      <div class="rejilla" id="rejilla" aria-label="Cuadrícula de 546 puntos, uno de ellos es peligroso"></div>
+      <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+        <button class="btn" id="verPeligro">Mostrar el peligroso</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · PREGUNTA -->
+<section class="escena" id="pregunta" data-quien="Julián" data-fase="1 · Problema">
+  <div class="dentro dos">
+    <div>
+      <div class="cabeza"><span class="fase" style="--c:var(--julian)">1 · Pregunta de análisis</span></div>
+      <p class="pregunta aparece">¿Se puede saber si un asteroide es <em>potencialmente peligroso</em> usando solo tres datos de su órbita?</p>
+    </div>
+    <div class="panel objetivos aparece">
+      <span class="label">Objetivo general</span>
+      <p class="gen">Construir y evaluar un modelo que sirva como <b>primer filtro</b> para identificar asteroides potencialmente peligrosos a partir de su perihelio, excentricidad e inclinación.</p>
+      <span class="label" style="margin-top:8px">Objetivos específicos</span>
+      <ol>
+        <li>Preparar y explorar el catálogo para entender cómo se distinguen los peligrosos.</li>
+        <li>Entrenar y comparar cuatro modelos de clasificación.</li>
+        <li>Evaluarlos con medidas que funcionen cuando los peligrosos son muy pocos.</li>
+        <li>Explicar en qué se equivoca el modelo y proponer cómo usarlo.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · QUÉ ES PELIGROSO -->
+<section class="escena" id="peligroso" data-quien="Julián" data-fase="1 · Problema">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--julian)">1 · Contexto</span></div>
+    <h2 class="titulo aparece">¿Qué hace peligroso <span class="suave">a un asteroide?</span></h2>
+    <div class="dos" style="align-items:start">
+      <svg class="aparece" viewBox="0 0 420 300" role="img" aria-label="Órbita de la Tierra con la franja de cercanía alrededor">
+        <defs><radialGradient id="g-sol"><stop offset="0" stop-color="var(--sun)"/><stop offset="1" stop-color="var(--sun)" stop-opacity="0"/></radialGradient></defs>
+        <circle cx="160" cy="150" r="118" fill="none" stroke="var(--hit)" stroke-opacity=".22" stroke-width="26"/>
+        <circle cx="160" cy="150" r="118" fill="none" stroke="var(--earth)" stroke-width="2.5"/>
+        <circle cx="160" cy="150" r="22" fill="url(#g-sol)"/><circle cx="160" cy="150" r="8" fill="var(--sun)"/>
+        <circle cx="243" cy="66" r="7" fill="var(--earth)"/>
+        <ellipse cx="190" cy="158" rx="150" ry="70" transform="rotate(18 190 158)" fill="none" stroke="var(--hit)" stroke-width="2" stroke-dasharray="6 5"/>
+        <text x="252" y="58" font-size="12" fill="var(--ink)">Tierra</text>
+        <text x="152" y="182" font-size="11" fill="var(--muted)">Sol</text>
+        <line x1="280" y1="150" x2="330" y2="150" stroke="var(--muted)"/><text x="334" y="146" font-size="11" fill="var(--hit)">franja de</text><text x="334" y="160" font-size="11" fill="var(--hit)">0,05 UA</text>
+        <text x="12" y="290" font-size="10" fill="var(--muted)">La franja está exagerada para que se vea.</text>
+      </svg>
+      <div class="condiciones aparece" style="grid-template-columns:1fr">
+        <div class="cond"><span class="label">Condición 1</span><h3>Su órbita pasa cerca</h3><p>A menos de 0,05 UA de la órbita de la Tierra: unos <b>7,5 millones de km</b>. 1 UA es la distancia de la Tierra al Sol, unos 150 millones de km. Esta distancia mínima entre órbitas se llama MOID.</p></div>
+        <div class="op" style="text-align:center">+</div>
+        <div class="cond"><span class="label">Condición 2</span><h3>Es grande</h3><p>Unos <b>140 metros o más</b>, casi la altura del edificio Coltejer (175 m). Se estima por su brillo: magnitud absoluta de 22 o menos.</p></div>
+        <div class="op" style="text-align:center">=</div>
+        <div class="cond res"><h3 style="margin-top:0">Potencialmente peligroso (PHA)</h3><p>No significa que vaya a chocar: significa que hay que vigilarlo.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · DATOS -->
+<section class="escena" id="datos" data-quien="Juan José" data-fase="2 · Metodología">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--juanjo)">2 · Los datos</span></div>
+    <h2 class="titulo aparece">Un catálogo real <span class="suave">de la NASA</span></h2>
+    <div class="fuente aparece">
+      <div><span class="label">Fuente</span><b>NASA JPL</b><span class="nota">Small-Body Database, vía Kaggle (alfredocook/asteroids-info)</span></div>
+      <div><span class="label">Filas</span><b class="mono">1.281.510</b><span class="nota">un asteroide por fila</span></div>
+      <div><span class="label">Columnas</span><b class="mono">23</b><span class="nota">usamos 3 para predecir</span></div>
+    </div>
+    <div class="vars aparece">
+      <div class="var">
+        <svg viewBox="0 0 220 110" aria-hidden="true"><circle cx="70" cy="55" r="7" fill="var(--sun)"/><ellipse cx="120" cy="55" rx="80" ry="38" fill="none" stroke="var(--orbit)" stroke-width="2"/><line x1="70" y1="55" x2="40" y2="55" stroke="var(--hit)" stroke-width="3"/><circle cx="40" cy="55" r="5" fill="var(--hit)"/><text x="18" y="85" font-size="11" fill="var(--hit)">perihelio</text></svg>
+        <h3>Perihelio</h3><code>q · en UA</code><p>Lo más cerca que pasa del Sol en su vuelta.</p></div>
+      <div class="var">
+        <svg viewBox="0 0 220 110" aria-hidden="true"><circle cx="60" cy="55" r="34" fill="none" stroke="var(--muted)" stroke-width="2"/><text x="44" y="104" font-size="11" fill="var(--muted)">e ≈ 0</text><ellipse cx="160" cy="55" rx="56" ry="22" fill="none" stroke="var(--orbit)" stroke-width="2"/><text x="140" y="104" font-size="11" fill="var(--orbit)">e ≈ 0,9</text></svg>
+        <h3>Excentricidad</h3><code>e · de 0 a 1</code><p>Qué tan alargada es la órbita: 0 es un círculo, cerca de 1 es muy estirada.</p></div>
+      <div class="var">
+        <svg viewBox="0 0 220 110" aria-hidden="true"><line x1="20" y1="70" x2="200" y2="70" stroke="var(--earth)" stroke-width="2"/><line x1="40" y1="88" x2="190" y2="34" stroke="var(--orbit)" stroke-width="2"/><path d="M150 70 A 40 40 0 0 0 147 55" fill="none" stroke="var(--hit)" stroke-width="2"/><text x="160" y="62" font-size="11" fill="var(--hit)">i</text><text x="20" y="92" font-size="10" fill="var(--earth)">plano de la Tierra</text></svg>
+        <h3>Inclinación</h3><code>i · en grados</code><p>Qué tan inclinada está su órbita frente a la de la Tierra.</p></div>
+    </div>
+    <div class="respuesta aparece"><span class="label" style="color:var(--hit)">Lo que se predice</span><b>¿Es potencialmente peligroso? Sí o No</b><span class="nota">La distancia mínima a la órbita de la Tierra y el brillo (tamaño) no entran al modelo: los usamos solo para entender sus errores.</span></div>
+  </div>
+</section>
+
+<!-- 6 · PREPARACIÓN -->
+<section class="escena" id="preparacion" data-quien="Juan José" data-fase="2 · Metodología">
+  <div class="dentro dos">
+    <div>
+      <div class="cabeza"><span class="fase" style="--c:var(--juanjo)">2 · Preparación</span></div>
+      <h2 class="titulo aparece">Limpiar <span class="suave">antes de enseñar</span></h2>
+      <p class="lead aparece">Un modelo aprende lo que le mostramos. Por eso quitamos lo que no podía existir y lo que no tenía respuesta. Las tres entradas se pusieron en la misma escala dentro del modelo.</p>
+    </div>
+    <div class="embudo aparece" id="embudo">
+      <div class="paso"><span class="n">Catálogo original</span><div class="t"><div class="b" data-w="100"></div></div><div class="v">1.281.510</div></div>
+      <div class="paso quita"><span class="n">Duplicados</span><div class="t"><div class="b" data-w="1"></div></div><div class="v">0<small>no había</small></div></div>
+      <div class="paso quita"><span class="n">Órbitas imposibles</span><div class="t"><div class="b" data-w="9"></div></div><div class="v">−3.286<small>tamaño ≤ 0, e ≥ 1 o periodo extremo</small></div></div>
+      <div class="paso quita"><span class="n">Sin respuesta</span><div class="t"><div class="b" data-w="7"></div></div><div class="v">−2.542<small>no se sabía si era peligroso</small></div></div>
+      <div class="paso fin"><span class="n">Datos limpios</span><div class="t"><div class="b" data-w="99.5"></div></div><div class="v"><b>1.275.686</b></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 · RAROS -->
+<section class="escena" id="raros" data-quien="Juan José" data-fase="2 · Metodología">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--juanjo)">2 · Exploración</span></div>
+    <h2 class="titulo aparece">Son muy raros</h2>
+    <div class="barras-raros aparece">
+      <div class="br"><span>No peligrosos</span><div class="t"><i style="width:100%"></i></div><span class="mono">1.273.351</span></div>
+      <div class="br p"><span style="color:var(--hit)">Peligrosos</span><div class="t" style="background:transparent"><i style="width:.183%"></i><span class="lupa">← ahí están: 0,18 %</span></div><span class="mono" style="color:var(--hit)">2.335</span></div>
+    </div>
+    <div class="dos igual aparece">
+      <div class="panel"><span class="label">Por qué importa</span><p style="margin-top:8px;font-size:19px">Un modelo que diga siempre <b>«no es peligroso»</b> acertaría el <b class="mono">99,8 %</b> de las veces y no encontraría ninguno. El porcentaje de aciertos engaña.</p></div>
+      <div class="panel"><span class="label">Decisión que tomamos</span><p style="margin-top:8px;font-size:19px">Separar los datos manteniendo la misma proporción de peligrosos, darles más peso al entrenar y medir con <b>sensibilidad</b> y <b>precisión</b>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · CERCA -->
+<section class="escena" id="cerca" data-quien="Juan José" data-fase="2 · Metodología">
+  <div class="dentro dos">
+    <div>
+      <div class="cabeza"><span class="fase" style="--c:var(--juanjo)">2 · Exploración</span></div>
+      <h2 class="titulo aparece">Lo que importa es <span class="suave">pasar cerca del Sol</span></h2>
+      <p class="lead aparece">Todos los peligrosos están a la izquierda: <b>ninguno tiene un perihelio mayor a 1,06 UA</b>. Para ser peligroso, un asteroide tiene que entrar a la zona de la Tierra.</p>
+      <div class="corr aparece"><span>Correlación con «peligroso»:</span><span>excentricidad <b class="mono">0,18</b></span><span>inclinación <b class="mono">0,03</b></span><span>perihelio <b class="mono">−0,06</b></span></div>
+      <p class="nota aparece">La correlación del perihelio es baja porque la relación no es una línea recta sino un límite: de 1,3 UA hacia afuera no hay peligrosos. Por eso el gráfico dice más que el número.</p>
+    </div>
+    <div class="panel disp-wrap aparece">
+      <canvas id="disp" aria-label="Gráfico de dispersión: perihelio contra excentricidad, con los peligrosos en rojo"></canvas>
+      <div class="tip" id="tip"></div>
+      <p class="nota" id="dispNota" style="margin-top:8px">Muestra del examen. Pase el mouse por un punto para ver el asteroide.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · MODELO -->
+<section class="escena" id="modelo" data-quien="Emmanuel" data-fase="2 · Metodología">
+  <div class="dentro dos">
+    <div>
+      <div class="cabeza"><span class="fase" style="--c:var(--emma)">2 · Modelado</span></div>
+      <h2 class="titulo aparece">Cómo aprende <span class="suave">el modelo</span></h2>
+      <div class="aparece">
+        <span class="label">Aprender y examinar</span>
+        <div class="split"><div class="a"><b>80 % · 1.020.548</b>para aprender · 1.868 peligrosos</div><div class="e"><b>20 % · 255.138</b>examen · 467</div></div>
+        <p class="nota">Misma proporción de peligrosos en las dos partes. Semilla 42 para que todo se pueda repetir.</p>
+      </div>
+      <div class="aparece" style="margin-top:18px">
+        <span class="label">Cuatro modelos comparados</span>
+        <div class="modelos"><span class="si">Regresión logística ✓</span><span>Árbol de decisión</span><span>Vecinos cercanos (KNN)</span><span>Modelo perezoso</span></div>
+      </div>
+    </div>
+    <div class="panel aparece">
+      <span class="label">Regresión logística: una balanza</span>
+      <p style="margin:8px 0 16px">Le da un peso a cada dato y con eso calcula la probabilidad de que el asteroide sea peligroso. Un peso negativo significa que, entre más bajo el dato, más riesgo.</p>
+      <div class="pesos" id="pesos">
+        <div class="peso"><span>Perihelio</span><div class="t"><i data-v="-10.34"></i></div><span class="v">−10,34</span></div>
+        <div class="peso"><span>Excentricidad</span><div class="t"><i data-v="0.18"></i></div><span class="v">0,18</span></div>
+        <div class="peso"><span>Inclinación</span><div class="t"><i data-v="0.19"></i></div><span class="v">0,19</span></div>
+      </div>
+      <p class="nota" style="margin-top:14px">Como los peligrosos son tan pocos, al entrenar les dimos más peso (pesos balanceados), para que el modelo no los ignore.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · MEDIR -->
+<section class="escena" id="medir" data-quien="Emmanuel" data-fase="3 · Resultados">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--emma)">3 · Cómo medimos</span></div>
+    <h2 class="titulo aparece">El que más acierta <span class="suave">puede no servir</span></h2>
+    <div class="perezoso aparece">
+      <span class="cifra tacha mono">99,8 %</span>
+      <p class="lead" style="max-width:34ch">de aciertos tiene el <b>modelo perezoso</b>, que siempre dice «no». Encuentra <b style="color:var(--hit)">0 de 467</b> peligrosos.</p>
+    </div>
+    <div class="preguntas aparece">
+      <div class="preg top"><span class="label" style="color:var(--emma)">La más importante</span><h3>De los peligrosos reales, ¿cuántos encontró?</h3><p>Se llama <b>sensibilidad</b> o <i>recall</i>. Un peligroso que se escapa cuesta mucho más que una falsa alarma.</p><p class="formula">encontrados ÷ peligrosos reales</p></div>
+      <div class="preg"><span class="label">La segunda</span><h3>De las alarmas que dio, ¿cuántas eran ciertas?</h3><p>Se llama <b>precisión</b>. Dice cuánto trabajo extra generan las falsas alarmas.</p><p class="formula">alarmas ciertas ÷ total de alarmas</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · RESULTADO -->
+<section class="escena" id="resultado" data-quien="Emmanuel" data-fase="3 · Resultados">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--emma)">3 · Resultados en el examen</span></div>
+    <h2 class="titulo aparece">Encontró <span class="suave">los 467</span></h2>
+    <div class="dos" style="align-items:start">
+      <div class="aparece">
+        <div class="matriz">
+          <div class="h"></div><div class="h">Dio alerta</div><div class="h">No dio alerta</div>
+          <div class="h">Peligroso</div><div class="c tp"><b>467</b><span>encontrados</span></div><div class="c fn"><b>0</b><span>se escaparon</span></div>
+          <div class="h">No peligroso</div><div class="c fp"><b>5.712</b><span>falsas alarmas</span></div><div class="c"><b>248.959</b><span>bien descartados</span></div>
+        </div>
+      </div>
+      <div class="aparece">
+        <div class="metricas">
+          <div class="met"><b class="mono">100 %</b><span>sensibilidad: no se escapa ninguno</span></div>
+          <div class="met"><b class="mono">7,6 %</b><span>precisión: 1 de cada 13 alarmas es real</span></div>
+          <div class="met"><b class="mono">0,994</b><span>AUC: qué tan bien separa (1 es perfecto)</span></div>
+          <div class="met"><b class="mono">2,4 %</b><span>del catálogo queda para revisar</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="tabla-wrap aparece">
+      <table class="comp">
+        <thead><tr><th>Modelo</th><th>Peligrosos que se escapan</th><th>Falsas alarmas</th><th>% de aciertos</th><th>AUC</th></tr></thead>
+        <tbody>
+          <tr class="elegido"><td>Regresión logística</td><td>0</td><td>5.712</td><td>97,8 %</td><td>0,994</td></tr>
+          <tr><td>Árbol de decisión</td><td>5</td><td>4.087</td><td>98,4 %</td><td>0,989</td></tr>
+          <tr><td>Vecinos cercanos (KNN)</td><td>463</td><td>3</td><td>99,8 %</td><td>0,890</td></tr>
+          <tr><td>Modelo perezoso</td><td>467</td><td>0</td><td>99,8 %</td><td>0,500</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 12 · CONFIABLE -->
+<section class="escena" id="confiable" data-quien="Emmanuel" data-fase="3 · Resultados">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--emma)">3 · Validación</span></div>
+    <h2 class="titulo aparece">¿Es confiable?</h2>
+    <div class="pruebas aparece">
+      <div class="prueba"><span class="ok">✓</span><h3>No se memorizó las respuestas</h3><p class="cifra mono">0,140 · 0,141</p><p>Puntaje F1 aprendiendo y en el examen. Si hubiera memorizado, le iría mucho peor en el examen.</p></div>
+      <div class="prueba"><span class="ok">✓</span><h3>Funciona con cualquier parte de los datos</h3><p class="cifra mono">5 de 5</p><p>Repetimos el entrenamiento 5 veces con partes distintas (validación cruzada) y siempre encontró el 100 % de los peligrosos.</p></div>
+      <div class="prueba"><span class="ok">✓</span><h3>Cualquiera lo puede repetir</h3><p class="cifra mono">8 de 8</p><p>El cuaderno corre de un clic en menos de 2 minutos, y una celda comprueba sola que salen los mismos números.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · RADAR -->
+<section class="escena" id="radar-escena" data-quien="Santiago" data-fase="En vivo">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--santi)">En vivo · El radar</span><span class="nota" id="progreso">0 de 0</span></div>
+    <div class="controles" role="group" aria-label="Controles del radar">
+      <div class="ctl"><button class="btn" id="play">Iniciar escaneo</button><button class="btn fant" id="reset">Reiniciar</button></div>
+      <div class="ctl"><span class="label">Velocidad</span><div class="seg" id="vel"><button data-v="1" aria-pressed="true">1×</button><button data-v="5" aria-pressed="false">5×</button><button data-v="25" aria-pressed="false">25×</button><button data-v="150" aria-pressed="false">150×</button></div></div>
+      <div class="ctl"><span class="label">Zoom</span><div class="seg" id="zoom"><button data-v="2.2" aria-pressed="false">Interior</button><button data-v="3.8" aria-pressed="true">Cinturón</button><button data-v="6" aria-pressed="false">Júpiter</button></div></div>
+      <div class="ctl"><button class="btn fant" id="sonido" aria-pressed="true">Sonido: sí</button></div>
+    </div>
+    <div class="consola">
+      <div class="panel radar-wrap" id="radarWrap">
+        <canvas id="radar" aria-label="Radar con el Sol, los planetas y la órbita del asteroide que se revisa"></canvas>
+        <div class="leyenda"><span><i style="background:var(--earth)"></i>Tierra (1 UA)</span><span><i style="background:var(--hit)"></i>Peligroso confirmado</span><span><i style="background:var(--small)"></i>Falsa alarma: pequeño</span><span><i style="background:var(--far)"></i>Falsa alarma: órbita lejana</span></div>
+      </div>
+      <div class="lado">
+        <div class="panel ahora">
+          <span class="label">Revisando ahora</span>
+          <h3 id="aNombre">Listo para escanear</h3>
+          <div class="meta"><div><span class="label">Perihelio</span><b id="aQ">-</b></div><div><span class="label">Excentric.</span><b id="aE">-</b></div><div><span class="label">Inclinación</span><b id="aI">-</b></div></div>
+          <div class="medidor" aria-hidden="true"><div class="lleno" id="aLleno"></div><div class="marca-u m-umbral"><span class="m-umbral-t">umbral</span></div></div>
+          <div class="veredicto"><span class="label">Probabilidad de ser peligroso</span><span class="mono" id="aP">-</span></div>
+          <div class="veredicto" style="margin-top:8px"><b id="aVer">-</b><span class="pill" id="aPill">sin revisar</span></div>
+        </div>
+        <div class="panel">
+          <div class="conteos">
+            <div class="conteo"><span class="label">Revisados</span><b id="cRev">0</b></div>
+            <div class="conteo alerta"><span class="label">Alertas</span><b id="cAl">0</b></div>
+            <div class="conteo"><span class="label">Peligrosos detectados</span><b id="cTP">0</b></div>
+            <div class="conteo esc" id="cFNc"><span class="label">Se escaparon</span><b id="cFN">0</b></div>
+          </div>
+          <div class="mini-matriz"><div class="h"></div><div class="h" style="text-align:center">Alerta</div><div class="h" style="text-align:center">Sin alerta</div>
+            <div class="h">Peligroso</div><div class="c tp" id="mTP">0</div><div class="c" id="mFN">0</div>
+            <div class="h">No lo es</div><div class="c fp" id="mFP">0</div><div class="c" id="mTN">0</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="nota" style="margin-top:10px">El tamaño y la forma de cada órbita son reales; hacia dónde apunta en el dibujo es ilustrativo, porque el archivo no trae ese dato. <span id="muestraTxt"></span></p>
+  </div>
+</section>
+
+<!-- 14 · ERRORES -->
+<section class="escena" id="errores" data-quien="Santiago" data-fase="4 · Interpretación">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--santi)">4 · Interpretación</span></div>
+    <h2 class="titulo aparece">Las alertas se agrupan <span class="suave">solas</span></h2>
+    <p class="lead aparece" style="margin-bottom:18px">Cada alerta del radar cae en una bandeja según lo que pasó en realidad. Las falsas alarmas no son al azar: aparecen justo donde al modelo <b>le faltan datos</b>.</p>
+    <div class="bandejas aparece">
+      <div class="bandeja hit"><header><h3>Peligroso confirmado</h3><span class="n" id="bHit">0</span></header><p class="por">El modelo acertó: la NASA lo clasifica como potencialmente peligroso.</p><div class="cuota"><i id="qHit"></i></div><div class="tarjetas" id="lHit"><p class="vacio">Inicie el radar para ver alertas.</p></div></div>
+      <div class="bandeja small"><header><h3>Falsa alarma: es pequeño</h3><span class="n" id="bSmall">0</span></header><p class="por">Su órbita sí pasa cerca, pero mide menos de unos 140 m. Al modelo le falta el <b>tamaño</b>.</p><div class="cuota"><i id="qSmall"></i></div><div class="tarjetas" id="lSmall"><p class="vacio">Inicie el radar para ver alertas.</p></div></div>
+      <div class="bandeja far"><header><h3>Falsa alarma: órbita lejana</h3><span class="n" id="bFar">0</span></header><p class="por">Su órbita se parece a la de un peligroso, pero nunca pasa a menos de 0,05 UA. Al modelo le falta <b>hacia dónde apunta</b> la órbita.</p><div class="cuota"><i id="qFar"></i></div><div class="tarjetas" id="lFar"><p class="vacio">Inicie el radar para ver alertas.</p></div></div>
+    </div>
+    <div class="escapados" id="escFila" hidden><div style="display:flex;justify-content:space-between;gap:8px"><h3 style="font-size:18px;color:var(--hit)">Peligrosos que se escaparon</h3><span class="mono" id="bEsc">0</span></div><p class="nota" style="margin:4px 0 8px">Con este umbral no hubo alerta y sí eran peligrosos.</p><div class="tarjetas" id="lEsc"></div></div>
+    <div class="aparece">
+      <div class="reparto"><div class="s" style="flex:49.4">49,4 % pequeños</div><div class="f" style="flex:50.6">50,6 % órbita lejana</div></div>
+      <p class="nota">Reparto de las 5.712 falsas alarmas en el examen completo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15 · UMBRAL -->
+<section class="escena" id="umbral" data-quien="Santiago" data-fase="4 · Interpretación">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--santi)">4 · Ajuste</span></div>
+    <h2 class="titulo aparece">Mover <span class="suave">el umbral</span></h2>
+    <p class="lead aparece" style="margin-bottom:18px">El modelo da una probabilidad; el umbral decide desde cuándo suena la alarma. Cambiarlo aquí también cambia el radar. Cifras del examen completo de 255.138 asteroides.</p>
+    <div class="umbral-g aparece">
+      <div class="panel">
+        <div class="seg" id="umbrales" style="margin-bottom:18px"></div>
+        <p class="grande mono" id="uFA">4.817</p><p class="nota" style="margin:2px 0 14px">falsas alarmas</p>
+        <p class="grande mono" id="uFN" style="color:var(--ok)">0</p><p class="nota" style="margin:2px 0 14px">peligrosos que se escapan de 467</p>
+        <p id="uLee"></p>
+      </div>
+      <div class="panel" style="display:grid;gap:18px">
+        <div class="serie" style="--c:var(--far)"><h3>Falsas alarmas</h3><div class="columnas" id="colFA"></div></div>
+        <div class="serie" style="--c:var(--hit)"><h3>Peligrosos que se escapan</h3><div class="columnas" id="colFN" style="height:90px"></div></div>
+        <div class="marcas" id="marcasU"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 · NASA -->
+<section class="escena" id="nasa" data-quien="Santiago" data-fase="En vivo">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--santi)">En vivo · Datos de hoy</span></div>
+    <h2 class="titulo aparece">Los asteroides <span class="suave">de esta semana</span></h2>
+    <p class="lead aparece" style="margin-bottom:16px">La página le pregunta a la NASA qué asteroides pasan cerca de la Tierra en los próximos días. Nuestro modelo da su veredicto con los mismos tres datos, y al lado está lo que dice la NASA.</p>
+    <div class="nasa-cab aparece"><button class="btn" id="nasaBtn">Consultar a la NASA</button><span class="nasa-estado" id="nasaEstado">Aún no se ha consultado.</span></div>
+    <div class="resumen-nasa" id="nasaResumen" hidden></div>
+    <div class="nasa-lista" id="nasaLista"></div>
+  </div>
+</section>
+
+<!-- 17 · CONCLUSIONES -->
+<section class="escena" id="conclusiones" data-quien="Julián" data-fase="5 · Conclusiones">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--julian)">5 · Conclusiones y recomendaciones</span></div>
+    <p class="respuesta-g aparece">Sí, como primer filtro. <span>No como juez final.</span></p>
+    <div class="tres aparece">
+      <div class="panel"><span class="label">Conclusión</span><h3>Encuentra a todos</h3><p>Los 467 peligrosos del examen, sin escapar ninguno, y deja solo el 2,4 % del catálogo para revisar.</p></div>
+      <div class="panel"><span class="label">Conclusión</span><h3>El perihelio es la clave</h3><p>Pasar cerca del Sol es lo que más pesa. Ningún peligroso tiene un perihelio mayor a 1,06 UA.</p></div>
+      <div class="panel"><span class="label">Conclusión</span><h3>Le faltan dos datos</h3><p>El tamaño y la distancia exacta a la órbita de la Tierra. Por eso da falsas alarmas.</p></div>
+    </div>
+    <div class="tres aparece" style="margin-top:14px">
+      <div class="panel" style="border-color:var(--julian)"><span class="label" style="color:var(--julian)">Recomendación 1</span><h3>Usarlo con umbral 0,8</h3><p>16 % menos falsas alarmas (de 5.712 a 4.817) y ningún peligroso escapado.</p></div>
+      <div class="panel" style="border-color:var(--julian)"><span class="label" style="color:var(--julian)">Recomendación 2</span><h3>Decidir qué medir primero</h3><p>Usar sus alertas para elegir a qué asteroides medirles primero el tamaño con telescopio.</p></div>
+      <div class="panel" style="border-color:var(--julian)"><span class="label" style="color:var(--julian)">Recomendación 3</span><h3>Agregar el tamaño</h3><p>Cuando exista el dato, sumarlo al modelo para bajar las falsas alarmas de los asteroides pequeños.</p></div>
+    </div>
+    <p class="limites aparece"><b>Limitaciones:</b> el modelo solo ve tres datos de la órbita; no conoce el tamaño ni la orientación. Se evaluó con un solo catálogo, y el examen tiene muy pocos peligrosos (467), así que la precisión puede variar con otros datos.</p>
+  </div>
+</section>
+
+<!-- 18 · CIERRE -->
+<section class="escena" id="cierre" data-quien="Julián" data-fase="Cierre">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--julian)">Cierre · Pruébelo usted</span></div>
+    <div class="dos">
+      <div class="panel aparece">
+        <div class="atajos" id="atajos">
+          <button data-q="0.65" data-e="0.69" data-i="10.8">Un Apolo real</button>
+          <button data-q="1.98" data-e="0.2" data-i="7.2">Del cinturón</button>
+          <button data-q="1.02" data-e="0.35" data-i="5">En el límite</button>
+          <button data-q="4.9" data-e="0.06" data-i="20">Troyano de Júpiter</button>
+        </div>
+        <div class="desliz"><div class="fila"><label for="sq">Perihelio: lo más cerca que pasa del Sol</label><output id="oq"></output></div><input type="range" id="sq" min="0.1" max="5.5" step="0.01" value="1.02"></div>
+        <div class="desliz"><div class="fila"><label for="se">Excentricidad: qué tan alargada es</label><output id="oe"></output></div><input type="range" id="se" min="0" max="0.95" step="0.01" value="0.35"></div>
+        <div class="desliz"><div class="fila"><label for="si">Inclinación frente a la Tierra</label><output id="oi"></output></div><input type="range" id="si" min="0" max="60" step="0.5" value="5"></div>
+        <div class="medidor" aria-hidden="true"><div class="lleno" id="lLleno"></div><div class="marca-u m-umbral"><span class="m-umbral-t">umbral</span></div></div>
+        <div class="veredicto"><span class="label">Probabilidad de ser peligroso</span><span class="mono" id="lP">-</span></div>
+        <div class="veredicto" style="margin-top:8px"><b id="lVer">-</b><span class="pill" id="lPill">-</span></div>
+        <p class="nota" id="lPor" style="margin-top:10px"></p>
+      </div>
+      <div class="aparece"><canvas id="mini" aria-label="Dibujo de la órbita que se está probando"></canvas></div>
+    </div>
+    <div class="gracias aparece">
+      <div id="qr" aria-label="Código QR de esta página"></div>
+      <div><h3>Gracias. ¿Preguntas?</h3><p class="nota">Escanee el código para abrir Centinela en su celular. Cuaderno de soporte: Google Colab, ejecutable de un clic.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<aside class="notas" id="notas" hidden aria-live="polite"></aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
+<script src="js/radar.js"></script>
+<script src="js/nasa.js"></script>
+</body>
+</html>

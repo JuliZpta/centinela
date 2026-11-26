@@ -354,3 +354,10 @@ input[type=range]{width:100%;accent-color:var(--hit)}
   .matriz{gap:4px}.matriz div{padding:10px 4px}.matriz .c b{font-size:24px}.matriz .h{font-size:10px}
   .met b{font-size:26px}.escena{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 }
+
+table.comp.obj td{text-align:left;vertical-align:top;font-size:15px;padding:12px 10px}
+table.comp.obj th{text-align:left}
+table.comp.obj td.si{color:var(--ok);font-weight:700;white-space:nowrap}
+.refs{margin-top:22px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:4px}
+.refs p{font-size:13px;color:var(--muted);padding-left:2em;text-indent:-2em}
+.metricas .met b{font-size:30px}

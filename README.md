@@ -27,8 +27,9 @@ Centinela es una exposición web por escenas que cuenta el proyecto completo y m
 | 14 | Las alertas se agrupan solas | Interpretación | Santiago |
 | 15 | Mover el umbral | Interpretación | Santiago |
 | 16 | Los asteroides de esta semana (NASA) | En vivo | Santiago |
-| 17 | Conclusiones y recomendaciones | Conclusiones | Julián |
-| 18 | Pruébelo usted | Cierre | Julián |
+| 17 | ¿Se cumplieron los objetivos? | Conclusiones | Julián |
+| 18 | Conclusiones y recomendaciones | Conclusiones | Julián |
+| 19 | Pruébelo usted y referencias | Cierre | Julián |
 
 ## Cómo se maneja en la sustentación
 

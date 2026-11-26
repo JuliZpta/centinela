@@ -197,6 +197,7 @@
       <div class="cabeza"><span class="fase" style="--c:var(--emma)">2 · Modelado</span></div>
       <h2 class="titulo aparece">Cómo aprende <span class="suave">el modelo</span></h2>
       <div class="aparece">
+        <p class="lead" style="margin-bottom:16px"><b>Tipo de problema:</b> clasificación binaria. Entran 3 datos de la órbita (X) y sale una respuesta Sí/No: ¿es potencialmente peligroso? (y).</p>
         <span class="label">Aprender y examinar</span>
         <div class="split"><div class="a"><b>80 % · 1.020.548</b>para aprender · 1.868 peligrosos</div><div class="e"><b>20 % · 255.138</b>examen · 467</div></div>
         <p class="nota">Misma proporción de peligrosos en las dos partes. Semilla 42 para que todo se pueda repetir.</p>
@@ -254,6 +255,8 @@
           <div class="met"><b class="mono">7,6 %</b><span>precisión: 1 de cada 13 alarmas es real</span></div>
           <div class="met"><b class="mono">0,994</b><span>AUC: qué tan bien separa (1 es perfecto)</span></div>
           <div class="met"><b class="mono">2,4 %</b><span>del catálogo queda para revisar</span></div>
+          <div class="met"><b class="mono">0,141</b><span>F1: balance entre sensibilidad y precisión</span></div>
+          <div class="met"><b class="mono">97,8 %</b><span>exactitud (aciertos totales), que aquí engaña</span></div>
         </div>
       </div>
     </div>
@@ -378,7 +381,27 @@
   </div>
 </section>
 
-<!-- 17 · CONCLUSIONES -->
+<!-- 17 · OBJETIVOS CUMPLIDOS -->
+<section class="escena" id="objetivos" data-quien="Julián" data-fase="5 · Conclusiones">
+  <div class="dentro">
+    <div class="cabeza"><span class="fase" style="--c:var(--julian)">5 · ¿Se cumplieron los objetivos?</span></div>
+    <h2 class="titulo aparece">Lo que nos propusimos, <span class="suave">y la evidencia</span></h2>
+    <div class="tabla-wrap aparece">
+      <table class="comp obj">
+        <thead><tr><th>Objetivo</th><th>Qué hicimos</th><th>Evidencia</th><th>¿Se cumplió?</th></tr></thead>
+        <tbody>
+          <tr><td><b>General:</b> un primer filtro con solo 3 datos de la órbita</td><td>Regresión logística con perihelio, excentricidad e inclinación</td><td>467 de 467 peligrosos encontrados; lista a revisar del 2,4 %</td><td class="si">✓ Sí</td></tr>
+          <tr><td>1 · Preparar y explorar los datos</td><td>Limpieza de 1.281.510 asteroides y análisis exploratorio</td><td>Embudo de limpieza, desbalance de 0,18 %, gráfico perihelio vs. excentricidad</td><td class="si">✓ Sí</td></tr>
+          <tr><td>2 · Entrenar y comparar modelos</td><td>Cuatro modelos con los mismos datos de examen</td><td>Tabla comparativa: solo la regresión logística no deja escapar ninguno</td><td class="si">✓ Sí</td></tr>
+          <tr><td>3 · Medir de la forma correcta</td><td>Sensibilidad, precisión, F1 y AUC en vez de solo aciertos</td><td>Matriz de confusión, validación cruzada 5 de 5, verificación 8 de 8</td><td class="si">✓ Sí</td></tr>
+          <tr><td>4 · Explicar los errores y proponer cómo usarlo</td><td>Revisión de las 5.712 falsas alarmas y prueba de umbrales</td><td>49,4 % pequeños y 50,6 % órbita lejana; umbral 0,8 con 16 % menos falsas alarmas</td><td class="si">✓ Sí</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 18 · CONCLUSIONES -->
 <section class="escena" id="conclusiones" data-quien="Julián" data-fase="5 · Conclusiones">
   <div class="dentro">
     <div class="cabeza"><span class="fase" style="--c:var(--julian)">5 · Conclusiones y recomendaciones</span></div>
@@ -397,7 +420,7 @@
   </div>
 </section>
 
-<!-- 18 · CIERRE -->
+<!-- 19 · CIERRE -->
 <section class="escena" id="cierre" data-quien="Julián" data-fase="Cierre">
   <div class="dentro">
     <div class="cabeza"><span class="fase" style="--c:var(--julian)">Cierre · Pruébelo usted</span></div>
@@ -422,6 +445,13 @@
     <div class="gracias aparece">
       <div id="qr" aria-label="Código QR de esta página"></div>
       <div><h3>Gracias. ¿Preguntas?</h3><p class="nota">Escanee el código para abrir Centinela en su celular. Cuaderno de soporte: Google Colab, ejecutable de un clic.</p></div>
+    </div>
+    <div class="refs aparece">
+      <span class="label">Referencias</span>
+      <p>alfredocook. (s. f.). <i>Asteroids info</i> [Conjunto de datos]. Kaggle. https://www.kaggle.com/datasets/alfredocook/asteroids-info</p>
+      <p>NASA Jet Propulsion Laboratory. (s. f.). <i>Small-Body Database</i>. https://ssd.jpl.nasa.gov/tools/sbdb_query.html</p>
+      <p>NASA. (s. f.). <i>Asteroids - NeoWs API</i>. https://api.nasa.gov</p>
+      <p>Pedregosa, F. et al. (2011). Scikit-learn: Machine learning in Python. <i>Journal of Machine Learning Research, 12</i>, 2825–2830.</p>
     </div>
   </div>
 </section>
